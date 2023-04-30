@@ -12,7 +12,10 @@ app.use(morgan('tiny'))
 const productSchema = mongoose.Schema({
     name: String,
     image: String,
-    countInStock: Number,
+    countInStock: {
+        type: Number,
+        required: true,
+    },
 })
 
 const Product = mongoose.model('Product', productSchema)
@@ -21,13 +24,14 @@ require('dotenv/config')
 
 const api = process.env.API_URL
 
-app.get(`${api}/products`, (req, res) => {
-    const product = {
-        id: 1,
-        image: 'Karim',
-        countInStock: 'Url',
+app.get(`${api}/products`, async (req, res) => {
+    const productList = await Product.find()
+    if (!productList) {
+        res.status(500).json({
+            success: false,
+        })
     }
-    res.send(product)
+    res.send(productList)
 })
 
 app.post(`${api}/products`, (req, res) => {
@@ -40,6 +44,7 @@ app.post(`${api}/products`, (req, res) => {
         .save()
         .then((createdProduct) => {
             res.status(201).json(createdProduct)
+            console.log('Product created successfully')
         })
         .catch((err) => {
             res.status(500).json({
