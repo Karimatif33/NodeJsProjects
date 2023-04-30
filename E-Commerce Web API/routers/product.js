@@ -1,8 +1,6 @@
-const {Product} = require('../models/product')
+const { Product } = require('../models/product')
 const express = require('express')
 const router = express.Router()
-
-
 
 router.get(`/`, async (req, res) => {
     const productList = await Product.find()
@@ -34,6 +32,4 @@ router.post(`/`, (req, res) => {
         })
 })
 
-
-
-module.exports =router
+module.exports = router

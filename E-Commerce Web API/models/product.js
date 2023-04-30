@@ -6,6 +6,6 @@ const productSchema = mongoose.Schema({
     countInStock: {
         type: Number,
         required: true,
-    }
+    },
 })
 exports.Product = mongoose.model('Product', productSchema)

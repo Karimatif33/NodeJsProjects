@@ -13,14 +13,7 @@ app.use(bodyParser.json())
 app.use(morgan('tiny'))
 
 // Routers
-app.use(`${api}/products`,productsRouter)
-
-
-
-
-
-
-
+app.use(`${api}/products`, productsRouter)
 
 mongoose
     .connect(process.env.CONNECTION_STRING)
