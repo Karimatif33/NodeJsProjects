@@ -1,35 +1,64 @@
 const { Order } = require('../models/order')
+const { OrderItem } = require('../models/order-item')
+
 const express = require('express')
 const router = express.Router()
 
 router.get(`/`, async (req, res) => {
-    const productList = await Product.find()
-    if (!productList) {
+    const orderList = await Order.find()
+        .populate('user', 'name')
+        .populate({
+            path: 'orderItems',
+            populate: { path: 'product', populate: 'category' },
+        })
+        .sort({ dateOrdered: -1 })
+    if (!orderList) {
         res.status(500).json({
             success: false,
         })
     }
-    res.send(productList)
+    res.send(orderList)
 })
 
-router.post(`/`, (req, res) => {
-    const product = new Product({
-        name: req.body.name,
-        image: req.body.image,
-        countInStock: req.body.countInStock,
-    })
-    product
-        .save()
-        .then((createdProduct) => {
-            res.status(201).json(createdProduct)
-            console.log('Product created successfully')
+router.get(`/:id`, async (req, res) => {
+    const order = await Order.findById(req.params.id)
+        .populate('user', 'name')
+        .populate({ path: 'orderItems', populate: 'product' })
+    if (!order) {
+        res.status(500).json({
+            success: false,
         })
-        .catch((err) => {
-            res.status(500).json({
-                error: err,
-                success: false,
+    }
+    res.send(order)
+})
+
+router.post(`/`, async (req, res) => {
+    const orderItemsIds = Promise.all(
+        req.body.orderItems.map(async (orderitem) => {
+            let newOrderItem = new OrderItem({
+                quantity: orderitem.quantity,
+                product: orderitem.product,
             })
+            newOrderItem = await newOrderItem.save()
+            return newOrderItem._id
         })
+    )
+    const orderItemsIdsResolved = await orderItemsIds
+    let order = new Order({
+        orderItems: orderItemsIdsResolved,
+        shippingAddress1: req.body.shippingAddress1,
+        shippingAddress2: req.body.shippingAddress2,
+        city: req.body.city,
+        zip: req.body.zip,
+        country: req.body.country,
+        phone: req.body.phone,
+        status: req.body.status,
+        totalPrice: req.body.totalPrice,
+        user: req.body.user,
+    })
+    order = await order.save()
+    if (!order) return res.status(400).send('the order cannot be created!')
+    res.send(order)
 })
 
 module.exports = router

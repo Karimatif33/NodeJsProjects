@@ -3,6 +3,7 @@ const express = require('express')
 const router = express.Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 
 router.get(`/`, async (req, res) => {
     const usertList = await User.find().select('-passwordHash')
@@ -42,7 +43,7 @@ router.post(`/`, async (req, res) => {
     user = await user.save()
     if (!user) return res.status(404).send('the user cannot be created!')
     res.send(user)
-})
+}) 
 
 router.post(`/login`, async (req, res) => {
     const user = await User.findOne({ email: req.body.email })
@@ -65,6 +66,38 @@ router.post(`/login`, async (req, res) => {
     } else {
         res.status(400).send('password Is wrong')
     }
+})
+router.delete(`/:id`, (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).send('Invalid User Id')
+    }
+    User.findByIdAndRemove(req.params.id)
+        .then((User) => {
+            if (User) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'the User is deleted successfully',
+                })
+            } else {
+                return res
+                    .status(404)
+                    .json({ success: false, message: 'the User not found' })
+            }
+        })
+        .catch((err) => {
+            return res.status(400).json({ success: false, error: err })
+        })
+})
+
+
+router.get(`/get/count/user`, async (req, res) => {
+    const userCount = await User.countDocuments({})
+    if (!userCount) {
+        res.status(500).json({
+            success: false,
+        })
+    }
+    res.send({ userCount: userCount })
 })
 module.exports = router
         
